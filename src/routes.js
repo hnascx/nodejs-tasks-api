@@ -1,8 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { Database } from './database.js'
 import { buildRoutePath } from './utils/build-route-path.js'
+import { getFormattedDateFromNow } from './utils/get-formatted-date-from-now.js'
 
 const database = new Database()
+
+const formattedDate = () => getFormattedDateFromNow()
 
 export const routes = [
   {
@@ -29,7 +32,10 @@ export const routes = [
         id: randomUUID(),
         title,
         description,
-        completed: false
+        completed: false,
+        created_at: formattedDate(),
+        updated_at: formattedDate(),
+        completed_at: null
       }
 
       database.insert('tasks', task)
@@ -42,20 +48,22 @@ export const routes = [
     path: buildRoutePath('/tasks/:id/complete'),
     handler: (req, res) => {
       const { id } = req.params
-  
       const tasks = database.select('tasks')
       const task = tasks.find(task => task.id === id)
-  
+
       if (!task) {
         return res.writeHead(404).end('Task not found.')
       }
 
-      // Alterna o status da task
+      const isCompleted = !task.completed
+
       database.update('tasks', id, {
         ...task,
-        completed: !task.completed
+        completed: isCompleted,
+        completed_at: isCompleted ? formattedDate() : null,
+        updated_at: formattedDate()
       })
-  
+
       return res.writeHead(200).end('Task status updated successfully.')
     }
   },
@@ -76,7 +84,8 @@ export const routes = [
       database.update('tasks', id, {
         ...task,
         title,
-        description
+        description,
+        updated_at: formattedDate()
       })
 
       return res.writeHead(200).end('Task updated successfully.')
