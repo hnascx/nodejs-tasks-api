@@ -26,7 +26,15 @@ export const routes = [
     method: 'POST',
     path: buildRoutePath('/tasks'),
     handler: (req, res) => {
+      if (!req.body || typeof req.body !== 'object') {
+        return res.writeHead(400).end('Request body is missing or invalid.')
+      }
+
       const { title, description } = req.body
+
+      if (!title || !description) {
+        return res.writeHead(400).end('Title and description are required.')
+      }
 
       const task = {
         id: randomUUID(),
@@ -53,7 +61,7 @@ export const routes = [
       const task = tasks.find(task => task.id === id)
 
       if (!task) {
-        return res.writeHead(404).end('Task not found.')
+        return res.writeHead(404).end('Task does not exist in the database.')
       }
 
       const isCompleted = !task.completed
@@ -72,14 +80,22 @@ export const routes = [
     method: 'PUT',
     path: buildRoutePath('/tasks/:id'),
     handler: (req, res) => {
+      if (!req.body || typeof req.body !== 'object') {
+        return res.writeHead(400).end('Request body is missing or invalid.')
+      }
+
       const { id } = req.params
       const { title, description } = req.body
+
+      if (title === undefined && description === undefined) {
+        return res.writeHead(400).end('At least one field (title or description) is required.')
+      }
 
       const tasks = database.select('tasks')
       const task = tasks.find(task => task.id === id)
 
       if (!task) {
-        return res.writeHead(404).end('Task not found.')
+        return res.writeHead(404).end('Task does not exist in the database.')
       }
 
       database.update('tasks', id, {
@@ -102,7 +118,7 @@ export const routes = [
       const task = tasks.find(task => task.id === id)
 
       if (!task) {
-        return res.writeHead(404).end('Task not found.')
+        return res.writeHead(404).end('Task does not exist in the database.')
       }
 
       database.delete('tasks', id)
